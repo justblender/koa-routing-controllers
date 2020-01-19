@@ -1,10 +1,7 @@
 import { HandlerMetadata } from "./HandlerMetadata";
-import { ParamMetadata } from "./ParamMetadata";
-import { ControllerOptions } from "src/options/ControllerOptions";
+import { ControllerOptions } from "../options/ControllerOptions";
 
 export interface ControllerMetadata {
-  // target: Function;
   handlers: HandlerMetadata[];
-  // handlerParams: ParamMetadata[];
   options?: ControllerOptions;
 };

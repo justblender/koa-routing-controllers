@@ -1,12 +1,7 @@
-import { ParamMetadata } from "./ParamMetadata";
+import { ParameterMetadataMap } from "./ParameterMetadata";
 
-export type HandlerParamsMap = {
-  [parameterIndex: number]: ParamMetadata;
-};
-
-export type HandlerMetadata = {
-  // readonly target: Function;
-  readonly handlerName: string;
-  readonly handlerParams: HandlerParamsMap;
-  readonly options?: any;
+export interface HandlerMetadata {
+  handlerName: string;
+  handlerParameters: ParameterMetadataMap;
+  options?: any;
 };
