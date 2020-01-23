@@ -1,4 +1,4 @@
-import { getMetadataBuilder } from "../index";
+import { getMetadataBuilder } from "../../index";
 
 export function Get(route: string): MethodDecorator {
   return (target: Object, propertyKey: string) => {
