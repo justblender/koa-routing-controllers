@@ -10,8 +10,16 @@ import { getFromContainer } from "./container";
 
 export * from "./decorators/Controller";
 export * from "./decorators/Ctx";
-export * from "./decorators/Get";
 export * from "./decorators/Param";
+export * from "./decorators/handlers/Connect";
+export * from "./decorators/handlers/Delete";
+export * from "./decorators/handlers/Get";
+export * from "./decorators/handlers/Head";
+export * from "./decorators/handlers/Options";
+export * from "./decorators/handlers/Patch";
+export * from "./decorators/handlers/Post";
+export * from "./decorators/handlers/Put";
+export * from "./decorators/handlers/Trace";
 export * from "./metadata/ControllerMetadata";
 export * from "./metadata/ControllerMetadataBuilder";
 export * from "./metadata/HandlerMetadata";
@@ -95,6 +103,9 @@ function getHandlerParameter(parameterMetadata: ParameterMetadata, context: Cont
 
     case "request-param":
       return context.params[options?.parameterName];
+
+    case "query-param":
+      return context.query[options?.queryParameterName];
 
     default:
       return null;
