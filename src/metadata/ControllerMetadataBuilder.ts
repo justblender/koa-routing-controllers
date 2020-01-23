@@ -1,24 +1,34 @@
-import { ControllerMetadata } from "./ControllerMetadata";
 import { HandlerMetadata } from "./HandlerMetadata";
-import { ParameterMetadataMap, ParameterMetadata } from "./ParameterMetadata";
+import { ParameterMetadataMap } from "./ParameterMetadata";
 import { ControllerOptions } from "../options/ControllerOptions";
+import { HandlerMetadataArgs } from "./args/HandlerMetadataArgs";
+import { ParameterMetadataArgs } from "./args/ParameterMetadataArgs";
+import { ControllerMetadata } from "./ControllerMetadata";
 
 export class ControllerMetadataBuilder {
   private handlers: HandlerMetadata[] = [];
   private handlerParameters: Record<string, ParameterMetadataMap> = {};
   private options: ControllerOptions;
 
-  addHandler(handlerName: string, options?: any) {
-    let handlerParameters = this.handlerParameters[handlerName] || [];
-    this.handlers.push({ handlerName, handlerParameters, options });
+  registerHandler(metadataArgs: HandlerMetadataArgs) {
+    this.handlers.push({
+      handlerName: metadataArgs.propertyKey,
+      handlerParameters: this.handlerParameters[metadataArgs.propertyKey] || {},
+      options: metadataArgs.options
+    });
   }
 
-  setHandlerParameter(handlerName: string, parameterIndex: number, parameterMetadata: ParameterMetadata) {
-    let handlerParameters = this.handlerParameters[handlerName] || (this.handlerParameters[handlerName] = {});
-    handlerParameters[parameterIndex] = parameterMetadata;
+  registerParameter(metadataArgs: ParameterMetadataArgs) {
+    let handlerParameters = this.handlerParameters[metadataArgs.propertyKey] || (this.handlerParameters[metadataArgs.propertyKey] = {});
+    let paramTypes = Reflect.getMetadata("design:paramtypes", metadataArgs.target, metadataArgs.propertyKey);
+
+    handlerParameters[metadataArgs.parameterIndex] = {
+      targetType: paramTypes?.[metadataArgs.parameterIndex],
+      options: metadataArgs.options
+    };
   }
 
-  setControllerOptions(options: ControllerOptions) {
+  registerController(options: ControllerOptions) {
     this.options = options;
   }
 

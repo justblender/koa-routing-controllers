@@ -87,13 +87,14 @@ function getHandlerParameters(handlerMethod: Function, handlerMetadata: HandlerM
 }
 
 function getHandlerParameter(parameterMetadata: ParameterMetadata, context: Context) {
-  switch (parameterMetadata?.parameterType) {
+  let options = parameterMetadata?.options;
+
+  switch (options?.parameterType) {
     case "context":
       return context;
 
     case "request-param":
-      let parameterName = parameterMetadata.options?.parameterName;
-      return context.params[parameterName];
+      return context.params[options?.parameterName];
 
     default:
       return null;

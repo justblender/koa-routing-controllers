@@ -1,15 +1,14 @@
 import { getMetadataBuilder } from "../index";
 
 export function Param(parameterName: string, options?: any): ParameterDecorator {
-  return (target: Object, handlerName: string, parameterIndex: number) => {
-    let types = Reflect.getMetadata("design:paramtypes", target, handlerName);
-    let targetType = types?.[parameterIndex];
-
+  return (target: Object, propertyKey: string, parameterIndex: number) => {
     getMetadataBuilder(target.constructor)
-      .setHandlerParameter(handlerName, parameterIndex, {
-        targetType,
-        parameterType: "request-param",
+      .registerParameter({
+        target,
+        propertyKey,
+        parameterIndex,
         options: {
+          parameterType: "request-param",
           parameterName,
           ...options
         }

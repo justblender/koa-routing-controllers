@@ -1,9 +1,9 @@
 import { getMetadataBuilder } from "../index";
 
-export function Controller(baseRoute: string = "/"): ClassDecorator {
+export function Controller(baseRoute = "/"): ClassDecorator {
   return (target: Function) => {
     getMetadataBuilder(target)
-      .setControllerOptions({
+      .registerController({
         baseRoute
       });
   };
