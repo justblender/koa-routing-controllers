@@ -58,8 +58,8 @@ createKoaServer({
 
 ## Roadmap
 
-- [ ] Add needed decorators
-- [ ] Add more type coverage
+- [x] Add needed decorators
+- [x] Add more type coverage
 - [x] Add support for injectable parameters
 - [ ] Add support for scoped middlewares
 - [ ] Add support for body/query validation
