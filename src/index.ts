@@ -9,9 +9,9 @@ import { HandlerMetadata } from "./metadata/HandlerMetadata";
 import { getFromContainer } from "./container";
 
 export * from "./decorators/Controller";
-export * from "./decorators/params/Ctx";
-export * from "./decorators/params/Param";
-export * from "./decorators/params/QueryParam";
+export * from "./decorators/parameters/Ctx";
+export * from "./decorators/parameters/Param";
+export * from "./decorators/parameters/QueryParam";
 export * from "./decorators/handlers/Connect";
 export * from "./decorators/handlers/Delete";
 export * from "./decorators/handlers/Get";
