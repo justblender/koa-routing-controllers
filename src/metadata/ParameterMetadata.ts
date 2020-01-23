@@ -1,4 +1,4 @@
-import { ParameterType } from "../types/ParameterType";
+import { ParameterOptions } from "src/options/ParameterOptions";
 
 export interface ParameterMetadataMap {
   [parameterIndex: number]: ParameterMetadata;
@@ -6,6 +6,5 @@ export interface ParameterMetadataMap {
 
 export interface ParameterMetadata {
   targetType: any;
-  parameterType?: ParameterType;
-  options: any;
+  options: ParameterOptions;
 };

@@ -1,4 +1,4 @@
-import { getMetadataBuilder } from "../index";
+import { getMetadataBuilder } from "../../index";
 
 export function Param(parameterName: string, options?: any): ParameterDecorator {
   return (target: Object, propertyKey: string, parameterIndex: number) => {

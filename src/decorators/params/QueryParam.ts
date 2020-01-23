@@ -1,6 +1,6 @@
-import { getMetadataBuilder } from "../index";
+import { getMetadataBuilder } from "../../index";
 
-export function Ctx(): ParameterDecorator {
+export function QueryParam(queryParameterName: string, options?: any): ParameterDecorator {
   return (target: Object, propertyKey: string, parameterIndex: number) => {
     getMetadataBuilder(target.constructor)
       .registerParameter({
@@ -8,7 +8,9 @@ export function Ctx(): ParameterDecorator {
         propertyKey,
         parameterIndex,
         options: {
-          parameterType: "request-param"
+          parameterType: "query-param",
+          queryParameterName,
+          ...options
         }
       });
   };

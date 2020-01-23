@@ -1,2 +1,4 @@
 export type ParameterType =
-  "context" | "request-param";
+  "context" |
+  "request-param" |
+  "query-param";
