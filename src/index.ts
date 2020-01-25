@@ -44,6 +44,8 @@ export function createKoaServer(options: KoaControllerOptions) {
 }
 
 export function useKoaServer(koa: Koa, options: KoaControllerOptions) {
+  koa.use(options.errorHandler || createErrorHandler(options.errorOnNotFound));
+
   koa.use(cors(options.corsOptions));
   koa.use(bodyParser(options.parserOptions));
 
@@ -55,17 +57,17 @@ export function useKoaServer(koa: Koa, options: KoaControllerOptions) {
 
     for (let handlerMetadata of controllerMetadata.handlers) {
       let handlerMethod = controllerInstance[handlerMetadata.name];
-      let handlerMiddleware = buildHandlerMiddleware(handlerMethod, handlerMetadata);
+      let handlerMiddleware = createHandlerMiddleware(handlerMethod, handlerMetadata);
 
       router.on(
         handlerMetadata.options.type,
         handlerMetadata.options.route,
-        buildMiddlewares(handlerMiddleware, true)
+        composeMiddlewares(handlerMiddleware, true)
       );
     }
 
     let routerMiddleware = router.mount(controllerMetadata.options.baseRoute);
-    let middlewares = buildMiddlewares(routerMiddleware, false);
+    let middlewares = composeMiddlewares(routerMiddleware, false);
 
     koa.use(middlewares);
   }
@@ -73,27 +75,30 @@ export function useKoaServer(koa: Koa, options: KoaControllerOptions) {
   return koa;
 }
 
-/* function buildErrorHandler() {
+function createErrorHandler(errorOnNotFound = true) {
   return async (context: Context, next: Next) => {
     try {
-      return await next();
-    } catch (error) {
-      console.log(error);
+      await next();
 
+      if (errorOnNotFound && context.status === 404) {
+        context.throw(404);
+      }
+    } catch (error) {
       let status = error.status || 500;
-      let message = error.expose ? error.message : "Internal Server Error";
+      let message = error.expose ? error.message : "An internal error has occurred";
 
       context.status = status;
       context.body = {
         error: {
-          status, message
+          status,
+          message
         }
       };
     }
   };
-} */
+}
 
-function buildHandlerMiddleware(handlerMethod: Function, handlerMetadata: HandlerMetadata) {
+function createHandlerMiddleware(handlerMethod: Function, handlerMetadata: HandlerMetadata) {
   return async (context: Context, next: Next) => {
     let handlerParameters = resolveParameters(handlerMethod, handlerMetadata, context);
     let handlerResponse = handlerMethod(...handlerParameters);
@@ -133,7 +138,7 @@ function resolveParameters(handlerMethod: Function, handlerMetadata: HandlerMeta
 }
 
 // TODO: implement support for scoped middlewares 
-function buildMiddlewares(middleware: any, scoped: boolean) {
+function composeMiddlewares(middleware: any, scoped: boolean) {
   // let beforeMiddlewares: any = [];
   // let afterMiddlewares: any = [];
 
