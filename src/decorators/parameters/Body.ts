@@ -1,6 +1,6 @@
 import { getMetadataBuilder } from "../../index";
 
-export function Param(key?: string, options?: any): ParameterDecorator {
+export function Body(key?: string): ParameterDecorator {
   return (target: Object, propertyKey: string, parameterIndex: number) => {
     getMetadataBuilder(target.constructor)
       .registerHandlerParameter({
@@ -8,8 +8,7 @@ export function Param(key?: string, options?: any): ParameterDecorator {
         propertyKey,
         parameterIndex,
         options: {
-          ...options,
-          type: "request-param",
+          type: "body",
           key
         }
       });

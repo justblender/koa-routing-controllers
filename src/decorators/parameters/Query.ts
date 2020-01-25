@@ -1,16 +1,16 @@
 import { getMetadataBuilder } from "../../index";
 
-export function QueryParam(queryParameterName: string, options?: any): ParameterDecorator {
+export function Query(key?: string, options?: any): ParameterDecorator {
   return (target: Object, propertyKey: string, parameterIndex: number) => {
     getMetadataBuilder(target.constructor)
-      .registerParameter({
+      .registerHandlerParameter({
         target,
         propertyKey,
         parameterIndex,
         options: {
-          parameterType: "query-param",
-          queryParameterName,
-          ...options
+          ...options,
+          type: "query-param",
+          key
         }
       });
   };

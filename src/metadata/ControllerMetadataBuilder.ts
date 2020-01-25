@@ -12,13 +12,13 @@ export class ControllerMetadataBuilder {
 
   registerHandler(metadataArgs: HandlerMetadataArgs) {
     this.handlers.push({
-      handlerName: metadataArgs.propertyKey,
-      handlerParameters: this.handlerParameters[metadataArgs.propertyKey] || {},
+      name: metadataArgs.propertyKey,
+      parameters: this.handlerParameters[metadataArgs.propertyKey] || {},
       options: metadataArgs.options
     });
   }
 
-  registerParameter(metadataArgs: ParameterMetadataArgs) {
+  registerHandlerParameter(metadataArgs: ParameterMetadataArgs) {
     let handlerParameters = this.handlerParameters[metadataArgs.propertyKey] || (this.handlerParameters[metadataArgs.propertyKey] = {});
     let paramTypes = Reflect.getMetadata("design:paramtypes", metadataArgs.target, metadataArgs.propertyKey);
 

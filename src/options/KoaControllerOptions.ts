@@ -1,4 +1,8 @@
+import { Options as CorsOptions } from "@koa/cors";
+import { Options as ParserOptions } from "koa-bodyparser";
+
 export interface KoaControllerOptions {
   controllers: Function[];
-  useDefaultErrorHandler?: boolean;
+  corsOptions?: CorsOptions;
+  parserOptions?: ParserOptions;
 }

@@ -1,17 +1,19 @@
 import Koa, { Context, Next } from "koa";
 import Router from "koa-tree-router";
+import cors from "@koa/cors";
+import bodyParser from "koa-bodyparser";
 import compose from "koa-compose";
 
 import { KoaControllerOptions } from "./options/KoaControllerOptions";
 import { ControllerMetadataBuilder } from "./metadata/ControllerMetadataBuilder";
-import { ParameterMetadata } from "./metadata/ParameterMetadata";
 import { HandlerMetadata } from "./metadata/HandlerMetadata";
 import { getFromContainer } from "./container";
 
 export * from "./decorators/Controller";
+export * from "./decorators/parameters/Body";
 export * from "./decorators/parameters/Ctx";
 export * from "./decorators/parameters/Param";
-export * from "./decorators/parameters/QueryParam";
+export * from "./decorators/parameters/Query";
 export * from "./decorators/handlers/Connect";
 export * from "./decorators/handlers/Delete";
 export * from "./decorators/handlers/Get";
@@ -42,6 +44,9 @@ export function createKoaServer(options: KoaControllerOptions) {
 }
 
 export function useKoaServer(koa: Koa, options: KoaControllerOptions) {
+  koa.use(cors(options.corsOptions));
+  koa.use(bodyParser(options.parserOptions));
+
   for (let controller of options.controllers) {
     let router = new Router();
 
@@ -49,11 +54,11 @@ export function useKoaServer(koa: Koa, options: KoaControllerOptions) {
     let controllerInstance = getFromContainer(controller) as any;
 
     for (let handlerMetadata of controllerMetadata.handlers) {
-      let handlerMethod = controllerInstance[handlerMetadata.handlerName];
+      let handlerMethod = controllerInstance[handlerMetadata.name];
       let handlerMiddleware = buildHandlerMiddleware(handlerMethod, handlerMetadata);
 
       router.on(
-        handlerMetadata.options.requestType,
+        handlerMetadata.options.type,
         handlerMetadata.options.route,
         buildMiddlewares(handlerMiddleware, true)
       );
@@ -68,49 +73,63 @@ export function useKoaServer(koa: Koa, options: KoaControllerOptions) {
   return koa;
 }
 
+/* function buildErrorHandler() {
+  return async (context: Context, next: Next) => {
+    try {
+      return await next();
+    } catch (error) {
+      console.log(error);
+
+      let status = error.status || 500;
+      let message = error.expose ? error.message : "Internal Server Error";
+
+      context.status = status;
+      context.body = {
+        error: {
+          status, message
+        }
+      };
+    }
+  };
+} */
+
 function buildHandlerMiddleware(handlerMethod: Function, handlerMetadata: HandlerMetadata) {
   return async (context: Context, next: Next) => {
-    let handlerResponse = handlerMethod(
-      ...getHandlerParameters(handlerMethod, handlerMetadata, context)
-    );
+    let handlerParameters = resolveParameters(handlerMethod, handlerMetadata, context);
+    let handlerResponse = handlerMethod(...handlerParameters);
 
     if (handlerResponse instanceof Promise) {
       handlerResponse = await handlerResponse;
     }
 
-    if (handlerResponse) {
-      context.body = handlerResponse;
-      return next();
+    if (!handlerResponse) {
+      context.throw(500, `No response given from "${handlerMetadata.name}" handler`);
     }
 
-    return context.throw(500,
-      `No response given from "${handlerMetadata.handlerName}" handler`
-    );
+    context.body = handlerResponse;
+    return next();
   };
 }
 
-function getHandlerParameters(handlerMethod: Function, handlerMetadata: HandlerMetadata, context: Context) {
-  return new Array(handlerMethod.length).fill(null).map((_, index) =>
-    getHandlerParameter(handlerMetadata.handlerParameters[index], context)
-  );
-}
+function resolveParameters(handlerMethod: Function, handlerMetadata: HandlerMetadata, context: Context) {
+  return new Array(handlerMethod.length).fill(undefined).map((_, index) => {
+    let parameterMetadata = handlerMetadata.parameters[index];
+    let options = parameterMetadata?.options;
 
-function getHandlerParameter(parameterMetadata: ParameterMetadata, context: Context) {
-  let options = parameterMetadata?.options;
+    switch (options?.type) {
+      case "context":
+        return context;
 
-  switch (options?.parameterType) {
-    case "context":
-      return context;
+      case "request-param":
+        return options?.key ? context.params[options?.key] : context.params;
 
-    case "request-param":
-      return context.params[options?.parameterName];
+      case "query-param":
+        return options?.key ? context.query[options?.key] : context.query;
 
-    case "query-param":
-      return context.query[options?.queryParameterName];
-
-    default:
-      return null;
-  }
+      case "body":
+        return options?.key ? context.body[options?.key] : context.body;
+    }
+  });
 }
 
 // TODO: implement support for scoped middlewares 
