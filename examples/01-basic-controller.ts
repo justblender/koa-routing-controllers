@@ -2,9 +2,9 @@ import "reflect-metadata";
 
 import { Controller, Get, Param, createKoaServer } from "../src/index";
 
-@Controller()
+@Controller("/hello")
 class HelloWorldController {
-  @Get("/")
+  @Get()
   helloWorld() {
     return "Hello, world!";
   }
@@ -16,8 +16,7 @@ class HelloWorldController {
 }
 
 createKoaServer({
-  controllers: [HelloWorldController],
-  useDefaultErrorHandler: true
+  controllers: [HelloWorldController]
 }).listen(8080, () => {
   console.log("Listening on http://localhost:8080");
 });
