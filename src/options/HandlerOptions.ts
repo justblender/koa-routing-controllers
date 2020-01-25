@@ -1,4 +1,4 @@
-import { RequestType } from "src/types/RequestType";
+import { RequestType } from "../types/RequestType";
 
 export interface HandlerOptions {
   type: RequestType;

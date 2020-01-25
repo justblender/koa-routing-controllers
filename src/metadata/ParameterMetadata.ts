@@ -1,4 +1,4 @@
-import { ParameterOptions } from "src/options/ParameterOptions";
+import { ParameterOptions } from "../options/ParameterOptions";
 
 export interface ParameterMetadataMap {
   [parameterIndex: number]: ParameterMetadata;
