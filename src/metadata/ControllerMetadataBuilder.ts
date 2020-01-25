@@ -1,3 +1,5 @@
+import "reflect-metadata";
+
 import { HandlerMetadata } from "./HandlerMetadata";
 import { ParameterMetadataMap } from "./ParameterMetadata";
 import { ControllerOptions } from "../options/ControllerOptions";
