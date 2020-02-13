@@ -25,7 +25,7 @@ export class ControllerMetadataBuilder {
     let paramTypes = Reflect.getMetadata("design:paramtypes", metadataArgs.target, metadataArgs.propertyKey);
 
     handlerParameters[metadataArgs.parameterIndex] = {
-      targetType: paramTypes?.[metadataArgs.parameterIndex],
+      targetType: paramTypes[metadataArgs.parameterIndex],
       options: metadataArgs.options
     };
   }

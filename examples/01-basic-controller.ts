@@ -1,12 +1,13 @@
 import "reflect-metadata";
 
-import { Controller, Get, Param, createKoaServer } from "../src/index";
+import { Controller, Get, Param, createKoaServer, Ctx } from "../lib";
+import { Context } from "vm";
 
 @Controller("/hello")
 class HelloWorldController {
   @Get()
-  helloWorld() {
-    return "Hello, world!";
+  helloWorld(@Ctx() ctx: Context) {
+    ctx.throw(404);
   }
 
   @Get("/:name")

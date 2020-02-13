@@ -1,13 +1,17 @@
-import Koa, { Context, Next } from "koa";
+import Koa, { Context, Next, Middleware } from "koa";
 import Router from "koa-tree-router";
 import cors from "@koa/cors";
 import bodyParser from "koa-bodyparser";
 import compose from "koa-compose";
 
+import { plainToClass } from "class-transformer";
+import { validateOrReject } from "class-validator";
+
 import { KoaControllerOptions } from "./options/KoaControllerOptions";
 import { ControllerMetadataBuilder } from "./metadata/ControllerMetadataBuilder";
 import { HandlerMetadata } from "./metadata/HandlerMetadata";
 import { getFromContainer } from "./container";
+import { ParameterMetadata } from "./metadata/ParameterMetadata";
 
 export * from "./decorators/Controller";
 export * from "./decorators/parameters/Body";
@@ -35,15 +39,23 @@ export * from "./container";
 
 const metadataBuilders: Record<string, ControllerMetadataBuilder> = {};
 
-export function getMetadataBuilder(target: Function) {
-  return metadataBuilders[target.name] || (metadataBuilders[target.name] = new ControllerMetadataBuilder());
+export function getMetadataBuilder(
+  target: Function
+): ControllerMetadataBuilder {
+  return (
+    metadataBuilders[target.name] ||
+    (metadataBuilders[target.name] = new ControllerMetadataBuilder())
+  );
 }
 
-export function createKoaServer(options: KoaControllerOptions) {
+export function createKoaServer(options: KoaControllerOptions = {}): Koa {
   return useKoaServer(new Koa(), options);
 }
 
-export function useKoaServer(koa: Koa, options: KoaControllerOptions) {
+export function useKoaServer(
+  koa: Koa,
+  options: KoaControllerOptions = {}
+): Koa {
   koa.use(options.errorHandler || createErrorHandler(options.errorOnNotFound));
 
   koa.use(cors(options.corsOptions));
@@ -56,8 +68,10 @@ export function useKoaServer(koa: Koa, options: KoaControllerOptions) {
     let controllerInstance = getFromContainer(controller) as any;
 
     for (let handlerMetadata of controllerMetadata.handlers) {
-      let handlerMethod = controllerInstance[handlerMetadata.name];
-      let handlerMiddleware = createHandlerMiddleware(handlerMethod, handlerMetadata);
+      let handlerMiddleware = createHandlerMiddleware(
+        controllerInstance[handlerMetadata.name],
+        handlerMetadata
+      );
 
       router.on(
         handlerMetadata.options.type,
@@ -85,7 +99,9 @@ function createErrorHandler(errorOnNotFound = true) {
       }
     } catch (error) {
       let status = error.status || 500;
-      let message = error.expose ? error.message : "An internal error has occurred";
+      let message = error.expose
+        ? error.message
+        : "An internal error has occurred";
 
       context.status = status;
       context.body = {
@@ -98,9 +114,16 @@ function createErrorHandler(errorOnNotFound = true) {
   };
 }
 
-function createHandlerMiddleware(handlerMethod: Function, handlerMetadata: HandlerMetadata) {
+function createHandlerMiddleware(
+  handlerMethod: Function,
+  handlerMetadata: HandlerMetadata
+): Middleware {
   return async (context: Context, next: Next) => {
-    let handlerParameters = resolveParameters(handlerMethod, handlerMetadata, context);
+    let handlerParameters = await resolveParameters(
+      context,
+      handlerMethod,
+      handlerMetadata
+    );
     let handlerResponse = handlerMethod(...handlerParameters);
 
     if (handlerResponse instanceof Promise) {
@@ -108,7 +131,10 @@ function createHandlerMiddleware(handlerMethod: Function, handlerMetadata: Handl
     }
 
     if (!handlerResponse) {
-      context.throw(500, `No response given from "${handlerMetadata.name}" handler`);
+      context.throw(
+        500,
+        `No response given from "${handlerMetadata.name}" handler`
+      );
     }
 
     context.body = handlerResponse;
@@ -116,35 +142,59 @@ function createHandlerMiddleware(handlerMethod: Function, handlerMetadata: Handl
   };
 }
 
-function resolveParameters(handlerMethod: Function, handlerMetadata: HandlerMetadata, context: Context) {
-  return new Array(handlerMethod.length).fill(undefined).map((_, index) => {
-    let parameterMetadata = handlerMetadata.parameters[index];
-    let options = parameterMetadata?.options;
+function resolveParameters(
+  context: Context,
+  handlerMethod: Function,
+  handlerMetadata: HandlerMetadata
+): Promise<any[]> {
+  return Promise.all(
+    new Array(handlerMethod.length).fill(undefined).map((_, index) => {
+      let parameterMetadata = handlerMetadata.parameters[index];
+      let parameterOptions = parameterMetadata?.options;
 
-    switch (options?.type) {
-      case "context":
-        return context;
+      if (parameterOptions) {
+        switch (parameterOptions.type) {
+          case "context":
+            return context;
 
-      case "request-param":
-        return options?.key ? context.params[options?.key] : context.params;
+          case "request-param":
+            return transformAndValidate(
+              context.params[parameterOptions.key] || context.params,
+              parameterMetadata
+            );
 
-      case "query-param":
-        return options?.key ? context.query[options?.key] : context.query;
+          case "query-param":
+            return transformAndValidate(
+              context.query[parameterOptions.key] || context.query,
+              parameterMetadata
+            );
 
-      case "body":
-        return options?.key ? context.body[options?.key] : context.body;
-    }
-  });
+          case "body":
+            return transformAndValidate(
+              context.body[parameterOptions.key] || context.body,
+              parameterMetadata
+            );
+        }
+      }
+    })
+  );
 }
 
-// TODO: implement support for scoped middlewares 
-function composeMiddlewares(middleware: any, scoped: boolean) {
+async function transformAndValidate(
+  object: any,
+  parameterMetadata: ParameterMetadata
+): Promise<any> {
+  return validateOrReject(plainToClass(parameterMetadata.targetType, object));
+}
+
+// TODO: implement support for scoped middlewares
+function composeMiddlewares(middleware: any, scoped: boolean): Middleware {
   // let beforeMiddlewares: any = [];
   // let afterMiddlewares: any = [];
 
   return compose([
     // ...beforeMiddlewares,
-    middleware,
+    middleware
     // ...afterMiddlewares
   ]);
 }
