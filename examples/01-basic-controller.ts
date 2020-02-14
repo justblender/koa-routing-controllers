@@ -1,7 +1,7 @@
 import "reflect-metadata";
 
-import { Controller, Get, Param, createKoaServer, Ctx } from "../lib";
-import { Context } from "vm";
+import { Controller, Get, Param, createKoaServer, Ctx } from "../src";
+import { Context } from "koa";
 
 @Controller("/hello")
 class HelloWorldController {
